@@ -11,12 +11,23 @@ Future<void> insertTask(Task task, Future<Database> database) async {
   final List<Map<String, dynamic>> lastTask =
       await db.rawQuery('SELECT * FROM task ORDER BY id DESC LIMIT 1');
 
-  Map<String, dynamic> newTask = Map<String, dynamic>.from({
-    'id': lastTask[0]['id'] + 1,
-    'label': task.label,
-    'datetime': task.datetime,
-    'done': task.done,
-  });
+  Map<String, dynamic> newTask;
+
+  try {
+    newTask = Map<String, dynamic>.from({
+      'id': lastTask[0]['id'] + 1,
+      'label': task.label,
+      'datetime': task.datetime,
+      'done': task.done,
+    });
+  } catch (e) {
+    newTask = Map<String, dynamic>.from({
+      'id': 1,
+      'label': task.label,
+      'datetime': task.datetime,
+      'done': task.done,
+    });
+  }
 
   await db.insert(
     'task',
@@ -257,64 +268,79 @@ class _DoneTaskListViewState extends State<DoneTaskListView> {
                         border: Border.all(color: Colors.blueAccent),
                       ),
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(
-                            child: Center(
-                              child: Column(
-                                children: [
-                                  Wrap(
-                                    runAlignment: WrapAlignment.start,
-                                    children: [
-                                      Text(allTasks[index].label),
-                                    ],
+                          Center(
+                            child: Column(
+                              children: [
+                                Wrap(
+                                  runAlignment: WrapAlignment.start,
+                                  children: [
+                                    Text(allTasks[index].label),
+                                  ],
+                                ),
+                                Text(
+                                  allTasks[index].datetime,
+                                  style: const TextStyle(fontSize: 6),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            width: 150,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                const IconButton(
+                                  icon: Icon(
+                                    Icons.edit,
+                                    color: Colors.blue,
                                   ),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        allTasks[index].datetime,
-                                        style: const TextStyle(fontSize: 6),
-                                      ),
-                                    ],
-                                  )
-                                ],
-                              ),
+                                  onPressed: null,
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.blue,
+                                  ),
+                                  onPressed: () {
+                                    deleteTask(
+                                            allTasks[index].id, widget.database)
+                                        .then((value) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(const SnackBar(
+                                        content:
+                                            Text('Task deleted successfully!'),
+                                      ));
+                                      setState(() {});
+                                    }).onError((error, stackTrace) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(const SnackBar(
+                                        content:
+                                            Text('Can\'t delete this task!'),
+                                      ));
+                                      setState(() {});
+                                    });
+                                  },
+                                ),
+                                allTasks[index].done == 0
+                                    ? IconButton(
+                                        icon: const Icon(
+                                          Icons.done,
+                                          color: Colors.blue,
+                                        ),
+                                        onPressed: () {
+                                          markTaskAsDone(allTasks[index].id,
+                                                  widget.database)
+                                              .then((value) {
+                                            setState(() {});
+                                          });
+                                        },
+                                      )
+                                    : const Text(""),
+                              ],
                             ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(5),
-                            child: const ElevatedButton(
-                              onPressed: null,
-                              child: Text(
-                                "edit",
-                                style: TextStyle(color: Colors.blue),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.only(right: 5),
-                            child: ElevatedButton(
-                              onPressed: () {
-                                deleteTask(allTasks[index].id, widget.database)
-                                    .then((value) {
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(const SnackBar(
-                                    content: Text('Task deleted successfully!'),
-                                  ));
-                                  setState(() {});
-                                }).onError((error, stackTrace) {
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(const SnackBar(
-                                    content: Text('Can\'t delete this task!'),
-                                  ));
-                                  setState(() {});
-                                });
-                              },
-                              child: const Text(
-                                "delete",
-                                style: TextStyle(color: Colors.blue),
-                              ),
-                            ),
-                          ),
+                          )
                         ],
                       ),
                     );
@@ -360,64 +386,79 @@ class _UnDoneTaskListViewState extends State<UnDoneTaskListView> {
                         border: Border.all(color: Colors.blueAccent),
                       ),
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(
-                            child: Center(
-                              child: Column(
-                                children: [
-                                  Wrap(
-                                    runAlignment: WrapAlignment.start,
-                                    children: [
-                                      Text(allTasks[index].label),
-                                    ],
+                          Center(
+                            child: Column(
+                              children: [
+                                Wrap(
+                                  runAlignment: WrapAlignment.start,
+                                  children: [
+                                    Text(allTasks[index].label),
+                                  ],
+                                ),
+                                Text(
+                                  allTasks[index].datetime,
+                                  style: const TextStyle(fontSize: 6),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            width: 150,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                const IconButton(
+                                  icon: Icon(
+                                    Icons.edit,
+                                    color: Colors.blue,
                                   ),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        allTasks[index].datetime,
-                                        style: const TextStyle(fontSize: 6),
-                                      ),
-                                    ],
-                                  )
-                                ],
-                              ),
+                                  onPressed: null,
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.blue,
+                                  ),
+                                  onPressed: () {
+                                    deleteTask(
+                                            allTasks[index].id, widget.database)
+                                        .then((value) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(const SnackBar(
+                                        content:
+                                            Text('Task deleted successfully!'),
+                                      ));
+                                      setState(() {});
+                                    }).onError((error, stackTrace) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(const SnackBar(
+                                        content:
+                                            Text('Can\'t delete this task!'),
+                                      ));
+                                      setState(() {});
+                                    });
+                                  },
+                                ),
+                                allTasks[index].done == 0
+                                    ? IconButton(
+                                        icon: const Icon(
+                                          Icons.done,
+                                          color: Colors.blue,
+                                        ),
+                                        onPressed: () {
+                                          markTaskAsDone(allTasks[index].id,
+                                                  widget.database)
+                                              .then((value) {
+                                            setState(() {});
+                                          });
+                                        },
+                                      )
+                                    : const Text(""),
+                              ],
                             ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(5),
-                            child: const ElevatedButton(
-                              onPressed: null,
-                              child: Text(
-                                "edit",
-                                style: TextStyle(color: Colors.blue),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.only(right: 5),
-                            child: ElevatedButton(
-                              onPressed: () {
-                                deleteTask(allTasks[index].id, widget.database)
-                                    .then((value) {
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(const SnackBar(
-                                    content: Text('Task deleted successfully!'),
-                                  ));
-                                  setState(() {});
-                                }).onError((error, stackTrace) {
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(const SnackBar(
-                                    content: Text('Can\'t delete this task!'),
-                                  ));
-                                  setState(() {});
-                                });
-                              },
-                              child: const Text(
-                                "delete",
-                                style: TextStyle(color: Colors.blue),
-                              ),
-                            ),
-                          ),
+                          )
                         ],
                       ),
                     );
@@ -464,77 +505,79 @@ class AllTaskCustomListViewState extends State<AllTaskCustomListView> {
                         border: Border.all(color: Colors.blueAccent),
                       ),
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(
-                            child: Center(
-                              child: Column(
-                                children: [
-                                  Wrap(
-                                    runAlignment: WrapAlignment.start,
-                                    children: [
-                                      Text(allTasks[index].label),
-                                    ],
+                          Center(
+                            child: Column(
+                              children: [
+                                Wrap(
+                                  runAlignment: WrapAlignment.start,
+                                  children: [
+                                    Text(allTasks[index].label),
+                                  ],
+                                ),
+                                Text(
+                                  allTasks[index].datetime,
+                                  style: const TextStyle(fontSize: 6),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            width: 150,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                const IconButton(
+                                  icon: Icon(
+                                    Icons.edit,
+                                    color: Colors.blue,
                                   ),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        allTasks[index].datetime,
-                                        style: const TextStyle(fontSize: 6),
-                                      ),
-                                    ],
-                                  )
-                                ],
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(5),
-                            child: const ElevatedButton(
-                              onPressed: null,
-                              child: Text(
-                                "edit",
-                                style: TextStyle(color: Colors.blue),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.only(right: 5),
-                            child: ElevatedButton(
-                              onPressed: () {
-                                deleteTask(allTasks[index].id, widget.database)
-                                    .then((value) {
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(const SnackBar(
-                                    content: Text('Task deleted successfully!'),
-                                  ));
-                                  setState(() {});
-                                }).onError((error, stackTrace) {
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(const SnackBar(
-                                    content: Text('Can\'t delete this task!'),
-                                  ));
-                                  setState(() {});
-                                });
-                              },
-                              child: const Text(
-                                "delete",
-                                style: TextStyle(color: Colors.blue),
-                              ),
-                            ),
-                          ),
-                          allTasks[index].done == 0
-                              ? IconButton(
-                                  icon: const Icon(Icons.done,
-                                      color: Colors.blue),
+                                  onPressed: null,
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.blue,
+                                  ),
                                   onPressed: () {
-                                    markTaskAsDone(
+                                    deleteTask(
                                             allTasks[index].id, widget.database)
                                         .then((value) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(const SnackBar(
+                                        content:
+                                            Text('Task deleted successfully!'),
+                                      ));
+                                      setState(() {});
+                                    }).onError((error, stackTrace) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(const SnackBar(
+                                        content:
+                                            Text('Can\'t delete this task!'),
+                                      ));
                                       setState(() {});
                                     });
                                   },
-                                )
-                              : const Text(""),
+                                ),
+                                allTasks[index].done == 0
+                                    ? IconButton(
+                                        icon: const Icon(
+                                          Icons.done,
+                                          color: Colors.blue,
+                                        ),
+                                        onPressed: () {
+                                          markTaskAsDone(allTasks[index].id,
+                                                  widget.database)
+                                              .then((value) {
+                                            setState(() {});
+                                          });
+                                        },
+                                      )
+                                    : const Text(""),
+                              ],
+                            ),
+                          )
                         ],
                       ),
                     );
@@ -640,8 +683,6 @@ class MainState extends State<Main> {
 }
 
 Future<void> main() async {
-  sqfliteFfiInit();
-  databaseFactory = databaseFactoryFfi;
   WidgetsFlutterBinding.ensureInitialized();
 
   final Future<Database> database = openDatabase(
